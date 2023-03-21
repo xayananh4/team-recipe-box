@@ -1,0 +1,18 @@
+a user
+ * can add recipes and instructions
+ * can tag recipes with different categories, recipes and tags can have many of each
+ * can update and delete tags
+ * can edit recipes
+ * delete receipes
+ * rate recipes
+ * list recipes - sorted by rating
+ * sort recipes - by ingredient
+
+Recipe:
+ * ingredients
+ * rating
+ * tags
+ * instructions - probably strings
+
+Tags:
+
