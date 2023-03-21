@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using RecipeBox.Models;
 
@@ -10,9 +11,10 @@ using RecipeBox.Models;
 namespace RecipeBox.Migrations
 {
     [DbContext(typeof(RecipeBoxContext))]
-    partial class RecipeBoxContextModelSnapshot : ModelSnapshot
+    [Migration("20230321201508_WeAddIngredientTable")]
+    partial class WeAddIngredientTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -222,7 +224,7 @@ namespace RecipeBox.Migrations
 
                     b.HasKey("IngredientId");
 
-                    b.ToTable("Ingredients");
+                    b.ToTable("Ingredient");
                 });
 
             modelBuilder.Entity("RecipeBox.Models.Recipe", b =>
@@ -370,13 +372,13 @@ namespace RecipeBox.Migrations
             modelBuilder.Entity("RecipeBox.Models.RecipeIngredient", b =>
                 {
                     b.HasOne("RecipeBox.Models.Ingredient", "Ingredient")
-                        .WithMany("JoinEntitiesIngredients")
+                        .WithMany("JoinEntities")
                         .HasForeignKey("IngredientId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("RecipeBox.Models.Recipe", "Recipe")
-                        .WithMany("JoinEntitiesIngredients")
+                        .WithMany()
                         .HasForeignKey("RecipeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -407,14 +409,12 @@ namespace RecipeBox.Migrations
 
             modelBuilder.Entity("RecipeBox.Models.Ingredient", b =>
                 {
-                    b.Navigation("JoinEntitiesIngredients");
+                    b.Navigation("JoinEntities");
                 });
 
             modelBuilder.Entity("RecipeBox.Models.Recipe", b =>
                 {
                     b.Navigation("JoinEntities");
-
-                    b.Navigation("JoinEntitiesIngredients");
                 });
 
             modelBuilder.Entity("RecipeBox.Models.Tag", b =>
