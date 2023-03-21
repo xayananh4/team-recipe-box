@@ -35,8 +35,7 @@ namespace RecipeBox.Controllers
       if (!ModelState.IsValid)
       {
         return View(model);
-      }
-      else
+      }      else
       {
         ApplicationUser user = new ApplicationUser { UserName = model.Email };
         IdentityResult result = await _userManager.CreateAsync(user, model.Password);

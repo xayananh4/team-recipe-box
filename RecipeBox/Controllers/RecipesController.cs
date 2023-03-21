@@ -23,15 +23,39 @@ namespace RecipeBox.Controllers
       _db = db;
     }
 
-    public async Task<ActionResult> Index()
+    // public async Task<ActionResult> Index()
+    // {
+    //   string userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+    //   ApplicationUser currentUser = await _userManager.FindByIdAsync(userId);
+    //   List<Recipe> userRecipes = _db.Recipes
+    //                       .Where(entry => entry.User.Id == currentUser.Id)
+    //                       .ToList();
+    //   return View(userRecipes);
+    // }
+
+    public async Task<IActionResult> Index(string sortOrder)
+{
+    // ViewData["NameSortParm"] = string.IsNullOrEmpty(sortOrder) ? "description_desc" : "";
+    // ViewData["RatingSortParm"] = sortOrder == "Rating" ? "rating_desc" : "Rating";
+    var recipes = from r in _db.Recipes
+                   select r;
+    switch (sortOrder)
     {
-      string userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-      ApplicationUser currentUser = await _userManager.FindByIdAsync(userId);
-      List<Recipe> userRecipes = _db.Recipes
-                          .Where(entry => entry.User.Id == currentUser.Id)
-                          .ToList();
-      return View(userRecipes);
+        case "description_desc":
+            recipes = recipes.OrderByDescending(r => r.Description);
+            break;
+        case "Rating":
+            recipes = recipes.OrderBy(r => r.Rating);
+            break;
+        case "rating_desc":
+            recipes = recipes.OrderByDescending(r => r.Rating);
+            break;
+        default:
+            recipes = recipes.OrderBy(r => r.RecipeId);
+            break;
     }
+    return View(await recipes.AsNoTracking().ToListAsync());
+}
 
     public ActionResult Create()
     {
@@ -95,6 +119,8 @@ namespace RecipeBox.Controllers
       _db.SaveChanges();
       return RedirectToAction("Index");
     }
+
+    
 
     public ActionResult Delete(int id)
     {
