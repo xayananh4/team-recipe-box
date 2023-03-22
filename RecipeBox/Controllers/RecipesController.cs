@@ -25,25 +25,32 @@ namespace RecipeBox.Controllers
 
         public async Task<IActionResult> Index(string sortOrder)
         {
+            string userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            ApplicationUser currentUser = await _userManager.FindByIdAsync(userId);
+            List<Recipe> userRecipes = _db.Recipes
+                                .Where(entry => entry.User.Id == currentUser.Id)
+                                .Include(recipe => recipe.JoinEntitiesIngredients)
+                                .Include(recipe => recipe.JoinEntities)
+                                .ToList();
+                // return View(userRecipes);
 
-            var recipes = from r in _db.Recipes
+            var recipes = from r in userRecipes
                           select r;
+            
             switch (sortOrder)
             {
                 case "description_desc":
-                    recipes = recipes.OrderByDescending(r => r.Description);
-                    break;
-                case "Rating":
-                    recipes = recipes.OrderBy(r => r.Rating);
+                    recipes = userRecipes.OrderBy(r => r.Description);
                     break;
                 case "rating_desc":
-                    recipes = recipes.OrderByDescending(r => r.Rating);
+                    recipes = userRecipes.OrderByDescending(r => r.Rating);
                     break;
                 default:
-                    recipes = recipes.OrderBy(r => r.RecipeId);
+                    recipes = userRecipes.OrderBy(r => r.RecipeId);
                     break;
             }
-            return View(await recipes.AsNoTracking().ToListAsync());
+            // return View(await recipes.AsNoTracking().ToListAsync());
+                    return View(recipes);
         }
 
         public ActionResult Create()

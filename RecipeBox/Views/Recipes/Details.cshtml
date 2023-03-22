@@ -12,7 +12,7 @@
 <h3>@Html.DisplayNameFor(model => model.Rating): @Html.DisplayFor(model => model.Rating)</h3>   
 
 
-@if(false)
+@if(@Model.JoinEntitiesIngredients.Count == 0)
 {
   <p>This recipe does not have any ingredients yet!</p>
 }
