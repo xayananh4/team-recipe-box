@@ -1,3 +1,5 @@
+using System;
+using System.Net.Mail;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Identity;
 using RecipeBox.Models;
@@ -37,7 +39,13 @@ namespace RecipeBox.Controllers
         return View(model);
       }      else
       {
-        ApplicationUser user = new ApplicationUser { UserName = model.Email };
+        ApplicationUser user = new ApplicationUser 
+        { 
+          UserName = model.Email,
+          Email = model.Email,
+          TwoFactorEnabled = true,
+          
+        };
         IdentityResult result = await _userManager.CreateAsync(user, model.Password);
         if (result.Succeeded)
         {
@@ -53,6 +61,10 @@ namespace RecipeBox.Controllers
         }
       }
     }
+        public IActionResult ResetPass()
+    {
+      return View();
+    }
 
         public ActionResult Login()
     {
@@ -60,6 +72,7 @@ namespace RecipeBox.Controllers
     }
 
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<ActionResult> Login(LoginViewModel model)
     {
       if (!ModelState.IsValid)
@@ -68,16 +81,58 @@ namespace RecipeBox.Controllers
       }
       else
       {
-        Microsoft.AspNetCore.Identity.SignInResult result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, isPersistent: true, lockoutOnFailure: false);
-        if (result.Succeeded)
+        ApplicationUser appUser= await _userManager.FindByEmailAsync(model.Email);
+        if (appUser != null)
         {
-          return RedirectToAction("Index");
+          // await _signInManager.SignOutAsync();
+          Microsoft.AspNetCore.Identity.SignInResult result = await _signInManager.PasswordSignInAsync(appUser, model.Password, false, true);
+          if (result.Succeeded)
+            // return RedirectToAction("Index");
+            return RedirectToAction("LoginTwoStep", new { appUser.Email });
+          if (result.RequiresTwoFactor)
+          {
+            return RedirectToAction("LoginTwoStep", new { appUser.Email });
+          }
         }
-        else
-        {
-          ModelState.AddModelError("", "There is something wrong with your email or username. Please try again.");
-          return View(model);
-        }
+        ModelState.AddModelError(nameof(model.Email), "Login Failed: Invalid Email or Password");
+        return View(model);
+      
+        // Microsoft.AspNetCore.Identity.SignInResult result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, isPersistent: true, lockoutOnFailure: false);
+        // if (result.Succeeded)
+        // {
+        //   return RedirectToAction("Index");
+        // }
+        // else
+        // {
+        //   ModelState.AddModelError("", "There is something wrong with your email or username. Please try again.");
+        //   return View(model);
+        // }
+      }
+    }
+    public async Task<IActionResult> LoginTwoStep(string email)
+    {
+      var user = await _userManager.FindByEmailAsync(email);
+      var token = await _userManager.GenerateTwoFactorTokenAsync(user, "Email");
+      EmailHelper emailHelper = new EmailHelper();
+      bool emailResponse = emailHelper.SendEmailTwoFactorCode(user.Email, token);
+      return View();
+    }
+    [HttpPost]
+    public async Task<IActionResult> LoginTwoStep(TwoFactor twoFactor, string returnUrl)
+    {
+      if(!ModelState.IsValid)
+      {
+        return View(twoFactor.TwoFactorCode);
+      }
+      var result = await _signInManager.TwoFactorSignInAsync("Email", twoFactor.TwoFactorCode, false, false);
+      if (result.Succeeded)
+      {
+        return Redirect(returnUrl ?? "/");
+      }
+      else
+      {
+        ModelState.AddModelError("", "Invalid Login Attempt");
+        return View();
       }
     }
 
